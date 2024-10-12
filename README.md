@@ -53,7 +53,7 @@ Spoiler: HPC allows large problems to be broken down into smaller parts and comp
 
 ### Summary of Differences
 
-| ** ** | **Concurrency** | **Parallelism** |
+|  | **Concurrency** | **Parallelism** |
 |-----------------|-----------------|-----------------|
 | **Concept** | Allows multiple tasks to overlap in time but not necessarily run simultaneously | Multiple tasks run simultaneously on actual hardware |
 | **Implementation** | Achieved through programming and task management, possible on both single-core and multi-core systems | Requires hardware support, such as multi-core processors or multiple machines |
