@@ -25,6 +25,15 @@ Spoiler: HPC allows large problems to be broken down into smaller parts and comp
 * Throughput: The number of jobs completed in a fixed time.
 
 
+## 2. Basic of Parallel Computing
+
+### Multithreading
+Multithreading: Running multiple threads within a single process, sharing the same memory space.
+
+### Multiprocessing
+Multiprocessing: Running multiple processes, each independent and with its own separate memory space.
+
+
 ### Concurrency
 **Definition**: Concurrency refers to a program's ability to handle multiple tasks at overlapping time intervals, although these tasks may not be executed simultaneously. Concurrency focuses more on the structure and design of the program, enabling it to effectively manage multiple tasks.
 
