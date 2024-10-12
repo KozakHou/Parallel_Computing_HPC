@@ -79,3 +79,36 @@ Multiprocessing: Running multiple processes, each independent and with its own s
   - Focuses on leveraging hardware to execute multiple tasks simultaneously.
   - Involves task division and load balancing.
   - Example: Using multi-processors, multi-core systems, GPU acceleration, etc.
+
+
+## 3. Synchronization Mechanisms and Race Conditions
+
+### What is a Race Condition?
+**Race Condition**: A race condition occurs when multiple threads or processes access and modify shared resources simultaneously, and the final result depends on the order of execution.
+- **Issue**: Race conditions can lead to data inconsistency, program crashes, or other unpredictable behavior.
+
+### Why is Synchronization Needed?
+- **Ensuring Data Consistency**: Protect shared resources to ensure that only one thread can modify them at a time.
+- **Avoiding Deadlock**: Properly manage locks to prevent threads from waiting indefinitely for each other’s resources.
+
+### Common Synchronization Tools
+
+#### Mutex (Mutual Exclusion Lock)
+- **Purpose**: Ensures that only one thread can access a shared resource at a time.
+- **Feature**: Provides an exclusive locking mechanism.
+
+#### Read-Write Lock
+- **Purpose**: Allows multiple threads to read a resource simultaneously but only one thread to write at any given time.
+- **Feature**: Improves performance in read-heavy applications.
+
+#### Condition Variable
+- **Purpose**: Allows a thread to wait for a certain condition to become true before continuing execution.
+- **Feature**: Used in conjunction with a mutex to coordinate between threads.
+
+#### Semaphore
+- **Purpose**: Controls access to a limited number of resources.
+- **Feature**: A counting-based synchronization mechanism, useful for implementing resource pools.
+
+#### Barrier
+- **Purpose**: Ensures that a group of threads waits at a specific point until all threads reach that point before continuing execution.
+- **Feature**: Used to synchronize the progress of multiple threads.
