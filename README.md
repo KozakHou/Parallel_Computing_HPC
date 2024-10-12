@@ -123,3 +123,8 @@ Multiprocessing: Running multiple processes, each independent and with its own s
 2. **Hold and Wait**: A thread holds a resource and simultaneously waits for another resource.
 3. **No Preemption**: Resources cannot be forcibly taken from a thread.
 4. **Circular Wait**: A circular chain of threads exists, where each thread is waiting for a resource held by the next in the chain.
+
+### How to avoid Deadlock ?
+* Ensure that all threads acquire locks in the same order.
+* Lock multiple mutexes simultaneously to avoid deadlock.
+
