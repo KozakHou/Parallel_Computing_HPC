@@ -1,8 +1,9 @@
 import threading
 
-# use multi-threading to caluclate the sum fdrom 1 to 1000
-
+# Define a global list to store partial sums
 partial_sums = []
+
+# Define a lock object to protect the shared resource
 lock = threading.Lock()
 
 def sum_numbers(start, end):
@@ -10,7 +11,7 @@ def sum_numbers(start, end):
     for i in range(start, end + 1):
         summation += i 
 
-
+    # Save the partial sum to the global list with lock
     with lock:
         partial_sums.append(summation)
         print(f"Thread ID: {threading.current_thread().name} - Sum from {start} to {end} is {summation}")    
@@ -25,7 +26,7 @@ if __name__ =="__main__":
         threads.append(thread)
         thread.start()
     
-    
+    # wait for all threads to finish
     for thread in threads:
         thread.join()
         
