@@ -91,7 +91,7 @@ Multiprocessing: Running multiple processes, each independent and with its own s
 #### Examples:
 - Asynchronous + Non-Blocking: I/O
 
-- Asynchronous + Blocking: Threaded atomics
+- Asynchronous + Blocking: Threaded atomics (demonstrated in 3.)
 
 - Synchronous + Blocking: Standard computing
 
