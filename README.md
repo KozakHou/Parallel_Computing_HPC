@@ -82,6 +82,7 @@ Multiprocessing: Running multiple processes, each independent and with its own s
 ### Tips:
 
 **Synchronous** = Thread will complete an action
+
 **Blocking** = Thread will wait until action is completed
 
 - Non-Blocking vs Blocking: Whether the thread will periodically poll for whether that task is complete, or whether it should wait for the task to complete before doing anything else
