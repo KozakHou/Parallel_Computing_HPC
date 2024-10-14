@@ -286,8 +286,6 @@ std::cout << "Elapsed time: " << end_time - start_time << " seconds." << std::en
 
 ### Summary
 
-OpenMP is a powerful tool for implementing shared memory parallel programming. With simple compiler directives, serial programs can be quickly converted into parallel programs.
-
 #### Key Concepts:
 - **Parallel Region**: Defines the code region for parallel execution.
 - **Work-Sharing Constructs**: Distribute tasks among different threads.
@@ -297,4 +295,4 @@ OpenMP is a powerful tool for implementing shared memory parallel programming. W
 #### Performance Optimization:
 - Avoid excessive synchronization and minimize the use of critical sections.
 - Use mechanisms like `reduction` to fully utilize parallel computing capabilities.
-This Markdown version provides a concise summary of OpenMP, highlighting
+
