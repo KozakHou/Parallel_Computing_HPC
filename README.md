@@ -79,7 +79,10 @@ Multiprocessing: Running multiple processes, each independent and with its own s
   - Focuses on leveraging hardware to execute multiple tasks simultaneously.
   - Involves task division and load balancing.
   - Example: Using multi-processors, multi-core systems, GPU acceleration, etc.
+### Tips:
+- Non-Blocking vs Blocking: Whether the thread will periodically poll for whether that task is complete, or whether it should wait for the task to complete before doing anything else
 
+- Synchronous vs Asynchronous: Whether to execute the operation as initiated by the program or as a response to an event from the kernel.
 
 ## 3. Synchronization Mechanisms and Race Conditions
 
