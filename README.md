@@ -80,9 +80,22 @@ Multiprocessing: Running multiple processes, each independent and with its own s
   - Involves task division and load balancing.
   - Example: Using multi-processors, multi-core systems, GPU acceleration, etc.
 ### Tips:
+
+**Synchronous** = Thread will complete an action
+**Blocking** = Thread will wait until action is completed
+
 - Non-Blocking vs Blocking: Whether the thread will periodically poll for whether that task is complete, or whether it should wait for the task to complete before doing anything else
 
 - Synchronous vs Asynchronous: Whether to execute the operation as initiated by the program or as a response to an event from the kernel.
+
+#### Examples:
+- Asynchronous + Non-Blocking: I/O
+
+- Asynchronous + Blocking: Threaded atomics
+
+- Synchronous + Blocking: Standard computing
+
+- Synchronous + Non-Blocking: Webservers where an I/O operation can be performed, but one never checks if the operation is completed.
 
 ## 3. Synchronization Mechanisms and Race Conditions
 
