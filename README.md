@@ -261,9 +261,7 @@ export OMP_NUM_THREAD=4
 2. Setting within the code
 ```cpp
 #include<omp.h>
-.
-.
-.
+// some code
 omp_set_num_threads(4);
 ```
 
