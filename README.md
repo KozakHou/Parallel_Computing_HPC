@@ -313,3 +313,220 @@ std::cout << "Elapsed time: " << end_time - start_time << " seconds." << std::en
 - Avoid excessive synchronization and minimize the use of critical sections.
 - Use mechanisms like `reduction` to fully utilize parallel computing capabilities.
 
+## 5. Distributed Memory Parallel Programming with MPI (C++)
+### Introduction to MPI
+
+#### What is MPI?
+**MPI (Message Passing Interface)** is a widely-used communication protocol designed for message passing in distributed computing environments. It provides a set of APIs that allow programs to communicate and collaborate across multiple computing nodes, such as multiple computers or processors.
+
+#### Why use MPI?
+- **Scalability**: Suitable for systems ranging from a few nodes to thousands or even millions of nodes.
+- **High Performance**: Offers low-latency and high-throughput communication capabilities.
+- **Portability**: Available on various platforms and hardware architectures.
+
+### Environment Setup
+
+#### Installing MPI Implementations
+Common MPI implementations include:
+- **MPICH**: A high-performance and portable MPI implementation.
+- **OpenMPI**: An open-source MPI implementation widely used in high-performance computing.
+
+#### Installation & Compiling
+On Linux: 
+```bash
+sudo apt-get install libopenmpi-dev openmpi-bin
+```
+On macOS:
+```bash
+brew install open-mpi
+```
+
+####
+```bash
+>> mpic++ program.cpp -o program
+>> mpirun -np 4 ./program
+```
+* -np 4: activate 4 MPI processes
+
+### MPI Basic Concepts
+
+#### MPI Communication Model
+
+- **Point-to-Point Communication**:
+  - `MPI_Send`: Sends a message.
+  - `MPI_Recv`: Receives a message.
+
+- **Collective Communication**:
+  - `MPI_Bcast`: Broadcasts a message to all processes.
+  - `MPI_Reduce`: Performs a reduction operation (e.g., summing data from all processes).
+  - `MPI_Barrier`: Synchronizes processes, ensuring all reach the same point before continuing.
+
+#### MPI Processes and Ranks
+
+- **MPI Processes**: An MPI program consists of multiple processes running in parallel.
+- **Rank**: Each process has a unique identifier (rank) that starts from 0.
+
+### MPI Basic Operation
+```cpp
+#include <mpi.h>
+#include <iostream>
+
+int main(int argc, char *argv[]) {
+    MPI_Init(&argc, &argv); // Initialize the MPI enviornment
+
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size); // Retrieves the total number of processes running in the MPI communicator.
+
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank); // Gets the rank (identifier) of the current process within the communicator.
+
+    char processor_name[MPI_MAX_PROCESSOR_NAME];
+    int name_len;
+    MPI_Get_processor_name(processor_name, &name_len); // acquire processes name
+
+    std::cout << "Hello from processor " << processor_name << ", rank " << world_rank
+              << " out of " << world_size << " processors" << std::endl;
+
+    MPI_Finalize(); // end the MPI environment
+    return 0;
+}
+```
+### Point-to-Point Communication
+
+#### `MPI_Send` and `MPI_Recv`
+
+**MPI_Send**
+```cpp
+int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm);
+```
+
+**MPI_Recv**
+```cpp
+int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status);
+
+```
+
+### Collective Communication
+
+####  Broadcast (MPI_Bcast)
+**MPI_Bcast**: Sends data from one process (the root process) to all other processes in a communicator.
+
+```cpp
+int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
+```
+`buf`: The starting address of the data to be broadcasted.
+`count`: Number of elements in the buffer.
+`datatype`: Data type of the elements in the buffer.
+`root`: The rank of the process that is broadcasting the data.
+`comm`: The communicator (e.g., MPI_COMM_WORLD).
+
+### Reduce
+**MPI_Reduce**: Performs a specified operation (e.g., summation, multiplication) on data from all processes and sends the result to the root process.
+
+```cpp
+int MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
+```
+
+`sendbuf`: Starting address of the send buffer (data to be reduced).
+`recvbuf`: Starting address of the receive buffer (only valid at the root).
+`count`: Number of elements in the buffer.
+`datatype`: Data type of the elements.
+`op`: Operation to be applied (e.g., MPI_SUM, MPI_PROD).
+`root`: The rank of the root process where the result will be stored.
+comm: The communicator (e.g., MPI_COMM_WORLD).
+
+### Scatter and Gather
+
+#### MPI_Scatter
+**MPI_Scatter**: Distributes an array of data from the root process to all processes in the communicator, where each process receives a portion of the data.
+
+#### Syntax:
+```cpp
+int MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
+```
+`sendbuf`: Address of the array to be scattered (valid only at the root).
+`sendcount`: Number of elements sent to each process.
+`sendtype`: Data type of the elements in the send buffer.
+`recvbuf`: Address of the buffer where the scattered data will be received.
+`recvcount`: Number of elements received by each process.
+`recvtype`: Data type of the elements in the receive buffer.
+
+### MPI Data Types and Topologies
+
+#### MPI Data Types
+- **Basic Data Types**:
+  - `MPI_INT`
+  - `MPI_FLOAT`
+  - `MPI_DOUBLE`
+  - `MPI_CHAR`
+  - ...
+
+- **Custom Data Types**:
+  - You can define custom data structures using functions like `MPI_Type_create_struct`.
+
+#### MPI Topologies
+- **Purpose**: Defines the communication structure between processes, such as ring, grid, etc.
+
+- **Functions**:
+  - `MPI_Cart_create`: Creates a Cartesian topology.
+  - `MPI_Graph_create`: Creates a graph topology.
+
+---
+
+### Non-blocking Communication
+
+- **Advantages**: Non-blocking communication allows a process to continue performing other tasks while sending or receiving data, improving parallelism.
+
+- **Non-blocking Functions**:
+  - `MPI_Isend`: Initiates a non-blocking send operation.
+  - `MPI_Irecv`: Initiates a non-blocking receive operation.
+
+- **Wait Functions**:
+  - `MPI_Wait`: Waits for a non-blocking operation to complete.
+  - `MPI_Test`: Tests if a non-blocking operation has completed.
+
+### MPI and Parallel Algorithm Design
+
+1. **Problem Decomposition**: Break down the computational task into parts that can be executed in parallel.
+
+2. **Data Distribution**: Distribute data among different processes to minimize communication overhead.
+
+3. **Communication Patterns**: Optimize the communication between processes to avoid bottlenecks.
+
+4. **Load Balancing**: Ensure that the computational workload is evenly distributed among processes to prevent some from being idle.
+
+#### Performance Testing Tools:
+- **MPI Built-in Timing Function**:
+```cpp
+  double MPI_Wtime();
+```
+
+### Common Issues and Debugging Techniques
+
+1. **Deadlock**: Processes wait on each other, causing the program to halt.
+   - **Solution**: Check communication pairs to ensure that `Send` and `Recv` operations are correctly matched.
+
+2. **Data Inconsistency**: Incorrect data between processes.
+   - **Solution**: Verify data types and communication parameters to ensure consistent data exchange.
+
+3. **Using Debugging Tools**:
+   - MPI provides debugging options that can help track issues.
+   - Professional MPI debugging tools, such as **TotalView** and **Allinea DDT**, can assist in diagnosing complex issues in parallel programs.
+
+### Summary
+
+MPI is a powerful tool for implementing distributed memory parallel programming, particularly suited for multi-node computing environments.
+
+#### Key Concepts:
+- **Initialization and Finalization**: `MPI_Init` and `MPI_Finalize`.
+- **Processes and Ranks**: Each MPI process has a unique rank.
+- **Point-to-Point Communication**: `MPI_Send` and `MPI_Recv`.
+- **Collective Communication**: `MPI_Bcast`, `MPI_Reduce`, and others.
+
+#### Performance Optimization:
+- Efficiently divide tasks and data to minimize communication overhead.
+- Use non-blocking communication to overlap computation and communication.
+
+#### Debugging and Problem Solving:
+- Ensure proper communication matching to avoid deadlock.
+- Use debugging tools and logs to troubleshoot issues.
