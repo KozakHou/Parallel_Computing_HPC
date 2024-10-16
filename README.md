@@ -389,6 +389,15 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 ```
+`*MPI_Init`: Initializes the MPI environment. This function must be called before any other MPI function.
+  
+`MPI_Comm_size`: Retrieves the total number of processes in the communicator.
+
+`MPI_Comm_rank`: Retrieves the rank (identifier) of the current process in the communicator.
+
+`MPI_Finalize`: Terminates the MPI environment and releases any allocated resources.
+
+
 ### Point-to-Point Communication
 
 #### `MPI_Send` and `MPI_Recv`
