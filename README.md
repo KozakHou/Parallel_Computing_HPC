@@ -1057,3 +1057,152 @@ Slurm is a commonly used resource management and job scheduling system in HPC cl
 - **Request Resources Appropriately**: Request CPU, memory, and time resources based on program needs to avoid wasting resources or falling short.
 - **Use Module to Manage Environments**: Explicitly load necessary environment modules in the job script to ensure consistency between the job environment and the development environment.
 - **Debug and Test**: Before submitting large-scale jobs, perform small-scale tests to ensure the program runs correctly.
+
+### 8. Distributed Training (Machine Learning)
+
+#### Basic Concepts of Distributed Training
+
+##### Why is Distributed Training Needed?
+- **Large-scale datasets**: Datasets may be too large to fit into the memory of a single node.
+- **Large models**: Deep learning models have an enormous number of parameters, making the training process computationally intensive.
+- **Accelerating training**: Distributed training can shorten training times and accelerate model iteration.
+
+##### Parallelization Strategies
+- **Data Parallelism**: The dataset is divided into multiple parts, and model replicas are trained simultaneously on different nodes.
+- **Model Parallelism**: Different parts of the model are distributed across different nodes for simultaneous computation.
+
+### Data Parallelism
+
+#### Principles of Data Parallelism
+- **Model Replication**: Each computing node holds a complete replica of the model.
+- **Data Sharding**: The training dataset is divided into multiple subsets, which are distributed to different nodes.
+- **Gradient Aggregation**: Each node computes its own gradients, and these gradients are then aggregated (e.g., averaged) to update the model parameters.
+
+#### Implementation of Data Parallelism
+- **Synchronous Updates**: All nodes compute their gradients, and only after all nodes have finished, the parameters are updated.
+- **Asynchronous Updates**: Nodes independently update parameters, which can lead to inconsistent parameters.
+
+#### Advantages and Disadvantages
+- **Advantages**:
+  - **Easy to implement**: Most deep learning frameworks support data parallelism.
+  - **Good scalability**: Can utilize more nodes to speed up training.
+- **Disadvantages**:
+  - **High communication overhead**: Gradient synchronization is required after each training step.
+  - **Limited by model size**: Each node must store a full copy of the model.
+
+### Model Parallelism
+
+#### Principles of Model Parallelism
+- **Model Partitioning**: Different parts of the model are distributed across different nodes.
+- **Forward and Backward Propagation**: Activation values and gradients are passed between nodes during forward and backward propagation.
+
+#### Implementation of Model Parallelism
+- **Layer-wise Partitioning**: Different layers of the model are placed on different nodes.
+- **Tensor Partitioning**: Weights or activations within the same layer are split across different nodes.
+
+#### Advantages and Disadvantages
+- **Advantages**:
+  - **Suitable for large models**: Useful when the model is too large to fit on a single node.
+- **Disadvantages**:
+  - **Complex implementation**: Requires careful partitioning of the model and handling communication between nodes.
+  - **Communication overhead**: Frequent communication between nodes can impact performance.
+
+###  Hybrid Parallelism
+- **Combining Data and Model Parallelism**: In some scenarios, both strategies can be used simultaneously to make the most of available resources.
+
+### Distributed Training with TensorFlow
+
+#### TensorFlow's Distributed Architecture
+- **Strategy API**: The `tf.distribute` module provides various strategies to implement distributed training.
+
+#### Data Parallel Strategy
+- **`MirroredStrategy`**:
+  - **Purpose**: Implements data parallelism on a single machine with multiple GPUs.
+
+Example usage:
+
+```python
+import tensorflow as tf
+
+# Create a MirroredStrategy
+strategy = tf.distribute.MirroredStrategy()
+
+# Open a strategy scope and build the model
+with strategy.scope():
+   model = tf.keras.models.Sequential([
+   tf.keras.layers.Dense(64, activation='relu'),
+   tf.keras.layers.Dense(10)
+])
+
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+
+# Train the model using data parallelism across multiple GPUs
+model.fit(dataset, epochs=10)
+```
+
+or you can change the `strategy`  to `MultiWorkerMirroredStrategy` for multi-worker-multi-GPU:
+- **Purpose**: Implements data parallelism across multiple machines with multiple GPUs.
+
+#### Environment Setup
+- **TF_CONFIG Environment Variable**: The `TF_CONFIG` environment variable must be set to specify the cluster configuration for distributed training.
+
+Example of setting `TF_CONFIG` for a multi-worker setup:
+```bash
+export TF_CONFIG='{
+  "cluster": {
+    "worker": ["worker0.example.com:12345", "worker1.example.com:23456"]
+  },
+  "task": {"type": "worker", "index": 0}
+}
+
+```python
+import tensorflow as tf
+
+strategy = tf.distribute.MultiWorkerMirroredStrategy()
+with strategy.scope():
+    model = create_model()
+    optimizer = tf.keras.optimizers.Adam()
+```
+
+### 9.6 Distributed Training with PyTorch
+
+#### 9.6.1 PyTorch's Distributed Package
+- **`torch.distributed`**: PyTorch's native distributed training package, which supports multiple backends such as NCCL, Gloo, and MPI.
+
+#### 9.6.2 Data Parallelism
+- **`torch.nn.DataParallel`**:
+  - **Purpose**: Implements data parallelism on a single machine with multiple GPUs.
+  
+Example usage:
+
+```python
+  import torch
+  import torch.nn as nn
+  import torch.optim as optim
+
+  # Define a simple model
+  model = nn.Sequential(
+      nn.Linear(512, 256),
+      nn.ReLU(),
+      nn.Linear(256, 10)
+  )
+
+  # Wrap the model with DataParallel to enable multi-GPU training
+  model = nn.DataParallel(model)
+
+  # Define loss function and optimizer
+  criterion = nn.CrossEntropyLoss()
+  optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+  # Move model to the available GPUs
+  model.cuda()
+
+  # Training loop (example)
+  for data, labels in dataloader:
+      data, labels = data.cuda(), labels.cuda()
+      optimizer.zero_grad()
+      outputs = model(data)
+      loss = criterion(outputs, labels)
+      loss.backward()
+      optimizer.step()
+ ```
