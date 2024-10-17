@@ -14,7 +14,7 @@ Spoiler: HPC allows large problems to be broken down into smaller parts and comp
 * Expansion: Handle larger datasets and more complex models.
 * Efficiency: Optimize resource usage and reduce costs.
 
-### Basic Concept for Computer architecture
+### Basic Concept for Computer Architecture
 * CPU
 * Memory stage levels: register, cache (L1, L2, L3), RAM
 * Storage: SSD, HDD
@@ -756,3 +756,304 @@ Python provides various methods for parallel and concurrent programming, suitabl
 #### Key Considerations:
 - Understand the limitations and impact of the GIL.
 - Pay attention to communication and synchronization between threads and processes.
+
+## 7. Job Scheduling with Slurm
+
+### Introduction to Slurm
+
+#### What is Slurm?
+- **Slurm** (Simple Linux Utility for Resource Management) is an open-source, scalable resource management and job scheduling system for high-performance computing (HPC) clusters.
+- It manages the computing resources of HPC clusters, such as CPUs, memory, and accelerators (e.g., GPUs), and provides users with the ability to submit, monitor, and control jobs.
+
+#### Why Use Slurm?
+- **Resource Management**: Efficiently allocates and manages cluster resources.
+- **Job Scheduling**: Provides advanced job queuing and scheduling strategies.
+- **Scalability**: Supports various cluster sizes, from small clusters to supercomputers.
+- **Open Source and Customizable**: Users can configure and extend Slurm according to their needs.
+
+### Basic Concepts of Slurm
+
+#### Key Components
+- **Node**: A computer within the cluster.
+- **Partition**: A logical grouping of nodes, used to define different resource limits and scheduling policies.
+- **Job**: A computational task submitted by the user.
+- **Job Step**: An individual process or set of processes executed as part of a job.
+
+#### Job Types
+- **Batch Job**: A non-interactive job submitted using a script.
+- **Interactive Job**: A job where the user interacts directly with the job's processes, often used for tasks like interactive debugging via `srun`.
+
+
+### Submitting Jobs
+
+#### Submitting a Batch Job with `sbatch`
+- **`sbatch`**: A command used to submit batch job scripts to Slurm.
+
+##### Example Script:
+`my_job_script.sh` or you can named it as `my_job_script.slurm`
+```bash
+#!/bin/bash
+#SBATCH --job-name=my_job          # Job name
+#SBATCH --output=output_%j.txt     # Standard output and error output file (%j represents the job ID)
+#SBATCH --ntasks=1                 # Total number of tasks (number of processes)
+#SBATCH --time=01:00:00            # Maximum runtime (HH:MM:SS)
+#SBATCH --mem=1G                   # Requested memory size
+
+echo "Hello, Slurm!"
+```
+
+```bash
+sbatch my_job_script.sh
+```
+### Job Script Directives
+
+- **`#SBATCH`**: Used to specify job resources and configurations in the job script. These directives should be placed at the top of the script.
+
+#### Common `#SBATCH` Directives:
+- `--job-name`: Sets the name of the job.
+- `--output`: Specifies the file for standard output and error output.
+- `--ntasks`: Specifies the total number of tasks, i.e., the number of processes.
+- `--cpus-per-task`: Specifies the number of CPU cores used per task.
+- `--nodes`: Specifies the number of nodes required.
+- `--time`: Sets the maximum runtime for the job.
+- `--mem`: Specifies the amount of memory requested.
+- `--partition`: Specifies the partition to which the job is submitted.
+
+### Resource Allocation
+
+#### CPU Resources
+- **`--ntasks`**: Specifies the total number of tasks, typically corresponding to the number of MPI processes.
+- **`--cpus-per-task`**: Specifies the number of CPU cores per task, often used to define the number of OpenMP threads per process.
+
+#### Example: Hybrid MPI and OpenMP Job
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=hybrid_job      # Job name
+#SBATCH --output=output_%j.txt     # Standard output and error output file (%j represents the job ID)
+#SBATCH --ntasks=4                 # Total number of MPI tasks (processes)
+#SBATCH --cpus-per-task=8          # Number of CPU cores per task (OpenMP threads)
+#SBATCH --time=02:00:00            # Maximum runtime (HH:MM:SS)
+#SBATCH --mem=8G                   # Memory size requested
+
+# Load necessary modules (e.g., MPI and OpenMP)
+module load mpi
+module load openmp
+
+# Run the hybrid MPI/OpenMP program
+mpirun -np 4 ./my_hybrid_mpi_openmp_program
+```
+
+### Memory Resources
+
+- **`--mem`**: Specifies the total amount of memory required per node.
+- **`--mem-per-cpu`**: Specifies the amount of memory allocated per CPU core.
+
+### 7.4.3 GPU Resources
+
+- **`--gres`**: Specifies generic resources, such as GPUs.
+
+#### Example: GPU Resource Allocation
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=gpu_job           # Job name
+#SBATCH --output=output_%j.txt       # Standard output and error output file (%j represents the job ID)
+#SBATCH --ntasks=1                   # Total number of tasks
+#SBATCH --cpus-per-task=4            # Number of CPU cores per task
+#SBATCH --mem=16G                    # Total memory per node
+#SBATCH --gres=gpu:1                 # Request 1 GPU
+#SBATCH --time=01:00:00              # Maximum runtime (HH:MM:SS)
+
+# Load necessary modules (e.g., CUDA or GPU libraries)
+module load cuda
+
+# Run the GPU-enabled program
+./my_gpu_program
+```
+
+### Job Arrays
+
+#### Purpose:
+- Job arrays are used when you need to submit a large number of similar jobs, making it easier to manage and submit multiple jobs at once.
+
+#### Submitting a Job Array
+
+##### Example: Submitting 10 Jobs
+```bash
+#!/bin/bash
+#SBATCH --job-name=array_job        # Job name
+#SBATCH --output=array_output_%A_%a.txt  # Output file (%A for array job ID, %a for array task ID)
+#SBATCH --array=1-10                # Submitting 10 jobs in the array
+
+# Use SLURM_ARRAY_TASK_ID to get the index of the current job
+echo "This is task number: $SLURM_ARRAY_TASK_ID"
+```
+
+### Controlling the Number of Concurrent Jobs
+
+#### Limiting the Number of Concurrent Jobs
+
+To limit the number of jobs running concurrently in a job array, you can specify a percentage value when submitting the job array.
+
+##### Example: Limit to 10 Concurrent Jobs
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=array_job         # Job name
+#SBATCH --output=array_output_%A_%a.txt  # Output file (%A for array job ID, %a for array task ID)
+#SBATCH --array=1-100%10             # Submit 100 jobs, but limit to 10 concurrent jobs
+
+# Use SLURM_ARRAY_TASK_ID to get the index of the current job
+echo "This is task number: $SLURM_ARRAY_TASK_ID"
+```
+
+### Job Monitoring and Management
+
+#### Viewing Job Status
+- **`squeue`**: Use `squeue` to view the status of currently queued and running jobs.
+
+```bash
+squeue -u your_username
+```
+
+#### Cancelling a Job
+**`scancel`**: Use `scancel` to cancel a job.
+
+```bash
+scancel job_id
+```
+
+### Viewing Job Details
+**`sacct`**: Use `sacct` to view resource usage details for completed jobs.
+
+```bash
+sacct -j job_id --format=JobID,JobName,Partition,State,AllocCPUS,TotalCPU,Elapsed
+```
+
+### Example: Submitting an MPI Job
+
+#### Job Script (mpi_job_script.sh / mpi_job_script.slurm)
+```bash
+#!/bin/bash
+#SBATCH --job-name=mpi_job         # Job name
+#SBATCH --output=mpi_output_%j.txt # Output file (%j represents the job ID)
+#SBATCH --ntasks=4                 # Total number of tasks (processes)
+#SBATCH --time=00:30:00            # Maximum runtime (HH:MM:SS)
+
+module load mpi   # Load the MPI module (command may vary depending on the cluster configuration)
+
+mpirun -np $SLURM_NTASKS ./your_mpi_program   # Run the MPI program using the number of tasks allocated by Slurm
+```
+#### Explanation:
+- **`module load mpi`**: Loads the MPI environment. The specific command may vary depending on the cluster configuration.
+- **`mpirun -np $SLURM_NTASKS`**: Runs the MPI program using the number of tasks allocated by Slurm (`$SLURM_NTASKS`), which corresponds to the number of processes specified in the job script.
+
+### Example: Submitting an OpenMP Job
+
+#### Job Script
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=openmp_job           # Job name
+#SBATCH --output=openmp_output_%j.txt   # Output file (%j represents the job ID)
+#SBATCH --ntasks=1                      # Total number of tasks (usually 1 for OpenMP jobs)
+#SBATCH --cpus-per-task=8               # Number of CPU cores per task (threads)
+#SBATCH --time=00:30:00                 # Maximum runtime (HH:MM:SS)
+
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK  # Set the number of threads for OpenMP
+
+./your_openmp_program  # Run your OpenMP program
+```
+#### Explanation:
+- **`export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK`**: Sets the number of threads that OpenMP will use, based on the number of CPU cores allocated by Slurm (`$SLURM_CPUS_PER_TASK`). This ensures that OpenMP programs use the correct number of threads as specified in the job configuration.
+
+### Example: Submitting a Python Job
+
+#### Job Script
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=python_job          # Job name
+#SBATCH --output=python_output_%j.txt  # Output file (%j represents the job ID)
+#SBATCH --ntasks=1                     # Total number of tasks
+#SBATCH --time=00:30:00                # Maximum runtime (HH:MM:SS)
+
+module load anaconda  # Load Anaconda or Python environment
+
+python your_script.py  # Execute the Python script
+```
+
+### Advanced Topics: Resource Reservation and Job Dependencies
+
+#### Resource Reservation
+- **Resource Reservation**: You can use the `salloc` command to reserve resources for interactive debugging.
+
+```bash
+salloc --ntasks=4 --time=01:00:00
+```
+
+### Job Dependencies
+
+#### Purpose:
+Job dependencies allow you to set relationships between jobs, so that a job starts only after another job has completed.
+
+#### Example: Job Dependency
+
+```bash
+# Submit the first job
+jobid1=$(sbatch --parsable job_script1.sh)
+
+# Submit the second job, which depends on the first job completing successfully
+sbatch --dependency=afterok:$jobid1 job_script2.sh
+```
+#### Explanation:
+- **`--parsable`**: Ensures that `sbatch` only outputs the job ID, making it easy to capture and use in a script.
+- **`--dependency`**: Sets the job dependency, defining when the job should start based on the status of another job.
+- **`afterok`**: Specifies that the dependent job will only start if the specified job completes successfully.
+
+### Common Issues and Debugging Techniques
+#### Job Fails to Start
+
+##### Possible Causes:
+- Insufficient resources, causing a long wait in the queue.
+- Unreasonable resource requests in the job script.
+
+#### Solutions:
+- Review and adjust resource requests in the job script.
+- Contact the system administrator to check the cluster's status.
+
+#### Job Crashes or Exits Abnormally
+
+##### Possible Causes:
+- Program error or crash.
+- Insufficient memory or timeout.
+
+##### Solutions:
+- Check the output and error files for details to pinpoint the issue.
+- Increase memory or adjust the time limit.
+
+#### Environment or Module Not Found
+
+##### Possible Causes:
+- The environment module is not correctly loaded in the job script.
+- Environment variables are not set.
+
+##### Solutions:
+- Explicitly load the required modules in the job script.
+- Ensure the environment setup in the job script matches the interactive environment.
+
+### Summary
+
+Slurm is a commonly used resource management and job scheduling system in HPC clusters, offering a rich set of features to manage computing resources and jobs.
+
+#### Key Features:
+- **Job Submission**: Use `sbatch` to submit batch jobs.
+- **Resource Allocation**: Specify resource requirements using `#SBATCH` directives.
+- **Job Management**: Monitor and control jobs using commands like `squeue` and `scancel`.
+- **Job Arrays**: Easily submit large numbers of similar jobs using job arrays.
+
+#### Best Practices:
+- **Request Resources Appropriately**: Request CPU, memory, and time resources based on program needs to avoid wasting resources or falling short.
+- **Use Module to Manage Environments**: Explicitly load necessary environment modules in the job script to ensure consistency between the job environment and the development environment.
+- **Debug and Test**: Before submitting large-scale jobs, perform small-scale tests to ensure the program runs correctly.
