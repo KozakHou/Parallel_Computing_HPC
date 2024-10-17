@@ -691,7 +691,7 @@ urls = [
 async def download_content(url):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
-            print(f"下載完成：{url}，狀態碼：{response.status}")
+            print(f"Download completed：{url}，status：{response.status}")
             return await response.text()
 
 async def main():
