@@ -1154,6 +1154,7 @@ export TF_CONFIG='{
   },
   "task": {"type": "worker", "index": 0}
 }
+```
 
 ```python
 import tensorflow as tf
@@ -1197,12 +1198,133 @@ Example usage:
   # Move model to the available GPUs
   model.cuda()
 
-  # Training loop (example)
-  for data, labels in dataloader:
-      data, labels = data.cuda(), labels.cuda()
-      optimizer.zero_grad()
-      outputs = model(data)
-      loss = criterion(outputs, labels)
-      loss.backward()
-      optimizer.step()
+  ... training ...
  ```
+
+### `torch.nn.parallel.DistributedDataParallel`
+
+- **Purpose**: Implements data parallelism across multiple machines with multiple GPUs, offering better performance than `DataParallel`.
+
+#### Environment Setup
+- To use `DistributedDataParallel`, you need to initialize the distributed environment.
+
+#### Example Setup:
+```python
+# train.py
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.distributed as dist
+from torch.utils.data import Dataset, DataLoader
+from torchvision import datasets, transforms
+
+def main():
+    # Initialize the distributed environment
+    dist.init_process_group(backend='nccl')
+    local_rank = torch.distributed.get_rank()
+    torch.cuda.set_device(local_rank)
+
+    # Create the dataset and data loader
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))
+    ])
+    dataset = datasets.MNIST('.', train=True, download=True, transform=transform)
+    sampler = torch.utils.data.distributed.DistributedSampler(dataset)
+    dataloader = DataLoader(dataset, batch_size=64, sampler=sampler)
+
+    # Define the model
+    model = nn.Sequential(
+        nn.Flatten(),
+        nn.Linear(28*28, 128),
+        nn.ReLU(),
+        nn.Linear(128, 10)
+    ).cuda()
+
+    # Wrap the model with DistributedDataParallel
+    model = nn.parallel.DistributedDataParallel(model, device_ids=[local_rank])
+
+    # Define loss function and optimizer
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(model.parameters(), lr=0.01)
+
+    # Training loop
+    for epoch in range(10):
+        sampler.set_epoch(epoch)  # Ensures different shuffling each epoch
+        for inputs, labels in dataloader:
+            inputs = inputs.cuda()
+            labels = labels.cuda()
+
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+if __name__ == '__main__':
+    main()
+```
+
+Initiate the training through (if there're 2 GPU):
+```bash
+python -m torch.distributed.launch --nproc_per_node=2 train.py
+```
+
+### Key Components
+
+- **`torch.distributed.launch`**: A tool provided by PyTorch to launch multiple processes for distributed training. It helps to set up the environment for each process, ensuring proper communication between nodes and GPUs.
+
+- **`DistributedSampler`**: Ensures that each process (node) gets a different part of the dataset, preventing duplication of data across processes. This is important for training efficiency in distributed settings.
+
+- **`DistributedDataParallel` (DDP)**: Enables data parallelism across multiple GPUs. DDP synchronizes gradients during the backward pass to ensure consistent parameter updates across GPUs, providing better performance compared to `DataParallel` in multi-GPU setups.
+
+### Performance Optimization Techniques
+
+#### Reducing Communication Overhead
+- **Gradient Compression**: Compress or quantize gradients to reduce the amount of data communicated between nodes.
+- **Overlapping Communication and Computation**: Perform communication in the background while computation continues in parallel, reducing idle time.
+
+#### Adjusting Batch Size
+- **Increase Batch Size**: In data parallelism, increasing the batch size can improve GPU utilization and training efficiency.
+- **Learning Rate Adjustment**: As batch size increases, you may need to adjust the learning rate to maintain optimal training convergence.
+
+#### Mixed Precision Training
+- **Concept**: Use half-precision (FP16) for computations to reduce memory usage and computational load.
+- **Implementation**: Deep learning frameworks typically provide support for mixed precision training, enabling efficient use of hardware resources like GPUs.
+
+Example in PyTorch for Mixed Precision Training:
+  ```python
+  from torch.cuda.amp import autocast, GradScaler
+  
+  # Initialize GradScaler for mixed precision
+  scaler = GradScaler()
+
+  for inputs, labels in dataloader:
+      inputs, labels = inputs.cuda(), labels.cuda()
+
+      optimizer.zero_grad()
+
+      # Perform forward pass and backward pass with mixed precision
+      with autocast():
+          outputs = model(inputs)
+          loss = criterion(outputs, labels)
+
+      # Scale gradients and perform optimizer step
+      scaler.scale(loss).backward()
+      scaler.step(optimizer)
+      scaler.update()
+  ```
+
+  ### Common Issues and Solutions
+
+#### Parameter Update Inconsistency
+- **Problem**: In asynchronous updates, model parameters may become unsynchronized across different nodes.
+- **Solution**: Use synchronous updates or introduce a **Parameter Server** to coordinate parameter updates across nodes.
+
+#### Low Resource Utilization
+- **Problem**: High communication overhead leads to idle computational resources, reducing efficiency.
+- **Solution**: Optimize communication, adjust the way the model is partitioned, and use an efficient communication backend (e.g., NCCL for multi-GPU setups).
+
+#### Training Does Not Converge
+- **Problem**: Changes in batch size can lead to instability in the training process, preventing convergence.
+- **Solution**: Adjust the learning rate accordingly and consider using a **learning rate warmup** strategy to stabilize the training during the initial phase.
