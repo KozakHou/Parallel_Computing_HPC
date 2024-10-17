@@ -14,7 +14,7 @@ Spoiler: HPC allows large problems to be broken down into smaller parts and comp
 * Expansion: Handle larger datasets and more complex models.
 * Efficiency: Optimize resource usage and reduce costs.
 
-### Basic Concept for Computer architecture
+### Basic Concept for Computer Architecture
 * CPU
 * Memory stage levels: register, cache (L1, L2, L3), RAM
 * Storage: SSD, HDD
