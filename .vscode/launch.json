@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": false,
-      "cwd": "/home/kozakhou/AI_Simulation_Modulus/Parallel_Computing_HPC",
-      "program": "/home/kozakhou/AI_Simulation_Modulus/Parallel_Computing_HPC/build/Debug/outDebug",
+      "cwd": "/home/kozakhou/AI_Simulation_Modulus/Parallel_Computing_HPC/MHD_Simulation_Alfven_Wave/1D_Case",
+      "program": "/home/kozakhou/AI_Simulation_Modulus/Parallel_Computing_HPC/MHD_Simulation_Alfven_Wave/1D_Case/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
